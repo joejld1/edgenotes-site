@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EdgeNotes — notes at the edge of your Mac screen</title>
+<meta name="description" content="A macOS notes panel that hides off the screen edge and slides in on a hotkey. Floats above fullscreen apps, never switches your Space, and stores plain markdown files on disk. $10, one time.">
+<meta property="og:title" content="EdgeNotes">
+<meta property="og:description" content="A notes panel that slides in from your Mac's screen edge. Floats above fullscreen, plain markdown on disk, no subscription.">
+<meta property="og:url" content="https://edgenotes.app">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1420;          /* page background, deep dusk */
+  --dusk:#232c44;         /* gradient partner */
+  --frost:rgba(255,255,255,.07);   /* glass card fill */
+  --frost-edge:rgba(255,255,255,.14);
+  --paper:#f2efe8;        /* primary text, warm off-white */
+  --slate:#9aa3b5;        /* secondary text */
+  --amber:#e9b44c;        /* single accent — highlighter */
+  --amber-ink:#241a06;
+  --slab:rgba(28,29,36,.94);       /* the panel's material */
+  --radius:14px;
+  --font-display:"Space Grotesk",system-ui,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1200px 700px at 85% -10%, #2b3554 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 40%, #1b2440 0%, transparent 55%),
+    linear-gradient(180deg,var(--dusk) 0%,var(--ink) 46%,#0b0f19 100%);
+  background-color:var(--ink);
+  color:var(--paper);
+  font-family:var(--font-body);
+  font-size:17px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--amber);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 56px}
+
+/* ---------- nav ---------- */
+nav{padding:22px 0}
+nav .wrap{display:flex;align-items:center;gap:26px}
+.wordmark{
+  display:flex;align-items:center;gap:.6em;margin-right:auto;
+  font-family:var(--font-mono);font-size:13px;color:var(--paper);
+}
+.wordmark .dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}
+nav a.navlink{color:var(--slate);font-size:.92rem}
+nav a.navlink:hover{color:var(--paper);text-decoration:none}
+.pill{
+  font-family:var(--font-mono);font-size:.82rem;font-weight:600;
+  background:var(--amber);color:var(--amber-ink);
+  padding:.5em 1.1em;border-radius:999px;white-space:nowrap;
+}
+.pill:hover{filter:brightness(1.07);text-decoration:none}
+
+/* ---------- hero ---------- */
+header.hero .wrap{
+  display:grid;grid-template-columns:1fr 420px;gap:40px;align-items:center;
+  padding-top:34px;padding-bottom:72px;
+}
+.eyebrow{
+  font-family:var(--font-mono);font-size:12.5px;letter-spacing:.09em;
+  color:var(--slate);text-transform:uppercase;
+}
+h1{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(2.4rem,5.4vw,62px);line-height:1.03;
+  letter-spacing:-.022em;margin:.55rem 0 1.3rem;
+}
+h1 .edge{color:var(--amber)}
+.lede{font-size:19px;color:var(--slate);max-width:32em}
+.lede strong{color:var(--paper);font-weight:600}
+.try{margin-top:2.1rem}
+.try-label{
+  font-family:var(--font-mono);font-size:14px;color:var(--slate);
+  max-width:34em;margin-bottom:.9rem;
+  /* Two lines' worth, so swapping the copy when the panel opens does not
+     shift the buttons underneath it. */
+  min-height:3.3em;
+}
+.try-label kbd{margin:0 .15em}
+.try-row{display:flex;flex-wrap:wrap;align-items:center;gap:.85rem}
+.try-row button{
+  font-family:var(--font-mono);font-size:.86rem;font-weight:600;
+  color:var(--amber-ink);background:var(--amber);
+  border:0;border-radius:999px;padding:.6em 1.2em;cursor:pointer;
+}
+.try-row button:hover{filter:brightness(1.07)}
+.or{font-family:var(--font-mono);font-size:.86rem;color:var(--slate)}
+kbd{
+  display:inline-block;padding:.18em .5em;border-radius:6px;
+  border:1px solid var(--frost-edge);border-bottom-width:2.5px;
+  background:var(--frost);color:var(--paper);
+  font-family:var(--font-mono);font-size:.8rem;
+}
+.cta-row{margin-top:2.4rem}
+.btn{
+  display:inline-block;font-family:var(--font-display);font-weight:600;font-size:1.02rem;
+  padding:.72em 1.5em;border-radius:10px;border:1px solid transparent;
+}
+.btn-buy{background:var(--amber);color:var(--amber-ink)}
+.btn-buy:hover{filter:brightness(1.07);text-decoration:none}
+.price-note{margin-top:1rem;font-size:.9rem;color:var(--slate)}
+
+/* ---------- the demo stage ---------- */
+.stage{
+  position:relative;height:466px;border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--frost-edge);
+  background:linear-gradient(150deg,#2c3550,#4a3f63 45%,#7d5570 100%);
+}
+.doc{
+  position:absolute;left:14px;top:14px;bottom:14px;right:44%;
+  background:#f5f4f0;border-radius:8px;padding:16px 18px;overflow:hidden;
+  font-family:Georgia,"Times New Roman",serif;font-size:11.5px;line-height:1.55;
+  color:#2a2a2a;cursor:default;
+}
+.doc p+p{margin-top:.7em}
+.stage-edge{position:absolute;right:0;top:0;bottom:0;width:18px;z-index:1}
+.stage-hint{
+  position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  width:3px;height:56px;border-radius:3px;background:var(--amber);
+  transition:width .2s,height .2s;z-index:2;
+}
+.stage-hint.dwelling{width:5px;height:104px}
+
+/* the panel — the One Sheet UI, in miniature */
+.panel{
+  position:absolute;right:0;top:14px;bottom:14px;width:330px;z-index:3;
+  transform:translateX(112%);transition:transform .16s ease-out;
+  display:flex;
+}
+.panel.open{transform:translateX(0)}
+.panel .tab{
+  flex:0 0 14px;align-self:flex-start;margin-top:82px;height:52px;
+  background:var(--slab);border-radius:7px 0 0 7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:rgba(255,255,255,.6);
+  backdrop-filter:blur(18px) saturate(120%);
+  -webkit-backdrop-filter:blur(18px) saturate(120%);
+}
+.slab{
+  flex:1;min-width:0;background:var(--slab);
+  border-radius:12px 0 0 12px;
+  display:flex;flex-direction:column;overflow:hidden;
+  font-family:var(--font-mono);
+  /* The app's material is a blur, not a flat fill. Without this the document
+     underneath stays legible through the slab and reads as a bug rather than
+     as glass. Browsers without support fall back to the fill alone. */
+  backdrop-filter:blur(18px) saturate(120%);
+  -webkit-backdrop-filter:blur(18px) saturate(120%);
+}
+.slab-top{display:flex;align-items:center;gap:6px;padding:11px 14px 9px}
+.chip{
+  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.09);
+  border-radius:6px;height:24px;display:flex;align-items:center;
+  padding:0 8px;font-size:10px;color:rgba(255,255,255,.85);white-space:nowrap;
+}
+.chip.search{flex:1;color:rgba(255,255,255,.4);background:rgba(255,255,255,.06);gap:5px}
+.chip.gear{padding:0 6px;color:rgba(255,255,255,.6)}
+.slab-rule{height:1px;background:rgba(255,255,255,.08)}
+.slab-notes{flex:1;overflow:hidden}
+.snote{display:grid;grid-template-columns:44px 1fr;padding:10px 0 11px}
+.snote+.snote{border-top:1px solid rgba(255,255,255,.06)}
+.sgutter{
+  text-align:right;padding-right:9px;font-size:9px;font-weight:600;
+  color:rgba(255,255,255,.4);padding-top:2px;
+}
+.sgutter.pin{color:var(--amber)}
+.sbody{border-left:1px solid rgba(255,255,255,.08);padding:0 14px 0 12px;min-width:0}
+.sbody h4{
+  font-family:var(--font-display);font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.92);margin-bottom:3px;
+}
+.sbody p{font-size:10.5px;line-height:1.5;color:rgba(255,255,255,.85);white-space:nowrap}
+.task{display:flex;align-items:center;gap:6px;font-size:10.5px;line-height:1.6;color:rgba(255,255,255,.85)}
+.box{
+  width:11px;height:11px;border-radius:3px;flex:0 0 auto;
+  border:1px solid rgba(255,255,255,.3);
+}
+.task.done .box{background:var(--amber);border-color:var(--amber)}
+.task.done span{color:rgba(255,255,255,.4);text-decoration:line-through}
+.slab-foot{
+  display:flex;justify-content:space-between;padding:8px 14px 10px;
+  font-size:9.5px;color:rgba(255,255,255,.5);
+}
+
+/* page-scale demo: the same motion at full height */
+#page-edge{position:fixed;top:0;right:0;width:18px;height:100vh;z-index:40}
+#page-hint{
+  position:fixed;right:4px;top:50%;transform:translateY(-50%);
+  width:3px;height:56px;border-radius:3px;background:var(--frost-edge);
+  z-index:39;transition:width .2s,height .2s,background .2s;
+}
+#page-hint.dwelling{background:var(--amber);width:5px;height:104px}
+#page-panel{
+  position:fixed;top:14px;bottom:14px;right:0;width:340px;z-index:50;
+  transform:translateX(112%);transition:transform .16s ease-out;display:flex;
+  filter:drop-shadow(0 12px 34px rgba(0,0,0,.45));
+}
+#page-panel.open{transform:translateX(0)}
+/* Page chrome, deliberately not styled like the panel: it explains the demo,
+   it is not part of the app being demonstrated. */
+#esc-hint{
+  /* Bottom centre, not beside the panel: the panel can be summoned while the
+     hero stage is on screen, and anything parked to its left lands on top of
+     the demo. */
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:51;
+  font-family:var(--font-mono);font-size:12px;color:var(--slate);
+  background:rgba(15,20,32,.82);border:1px solid var(--frost-edge);
+  border-radius:8px;padding:.5em .8em;white-space:nowrap;
+  opacity:0;visibility:hidden;transition:opacity .16s ease-out;
+}
+#esc-hint.on{opacity:1;visibility:visible}
+
+/* ---------- sections ---------- */
+section{padding:72px 0;border-top:1px solid rgba(255,255,255,.06)}
+h2{
+  font-family:var(--font-display);font-weight:700;letter-spacing:-.01em;
+  font-size:clamp(1.5rem,3vw,2rem);margin-bottom:1.6rem;
+}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:36px}
+.col h3{font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:.5rem}
+.col p{color:var(--slate);font-size:16px}
+.col p code,.prose code{
+  font-family:var(--font-mono);font-size:.86em;color:var(--paper);
+  background:var(--frost);border:1px solid var(--frost-edge);
+  border-radius:5px;padding:.08em .35em;white-space:nowrap;
+}
+.prose{max-width:44em;color:var(--slate)}
+.prose p+p{margin-top:1em}
+.prose strong{color:var(--paper)}
+
+/* pricing */
+.buy-row{display:flex;flex-wrap:wrap;gap:2.6rem;align-items:center}
+.plan{
+  width:400px;border:1px solid var(--amber);border-radius:var(--radius);
+  background:var(--frost);padding:1.8rem;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.plan h3{font-family:var(--font-display);font-size:1.15rem;font-weight:600}
+.plan .amount{
+  font-family:var(--font-display);font-weight:700;font-size:46px;
+  line-height:1.1;margin:.3rem 0 1rem;
+}
+.plan .amount small{font-size:1rem;font-weight:400;color:var(--slate)}
+.plan ul{list-style:none;padding:0;margin:0 0 1.5rem;color:var(--slate);font-size:.96rem}
+.plan li{padding:.22em 0}
+.plan li::before{content:"— ";color:var(--slate)}
+.plan .btn{width:100%;text-align:center;font-family:var(--font-mono);font-size:.9rem}
+.refund{font-size:.95rem;color:var(--slate);max-width:20em}
+
+/* shortcuts */
+table.keys{border-collapse:collapse;width:100%;max-width:640px;font-size:.95rem}
+table.keys td{padding:.55em .9em .55em 0;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
+table.keys td:first-child{width:64%}
+table.keys td .mods{color:var(--slate)}
+table.keys td:last-child{font-family:var(--font-mono);white-space:nowrap;text-align:right}
+
+footer{padding:44px 0 64px;border-top:1px solid rgba(255,255,255,.06);color:var(--slate);font-size:.92rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:1.4rem;justify-content:space-between;align-items:baseline}
+
+/* ---------- responsive & motion ---------- */
+@media (max-width:900px){
+  .wrap{padding:0 24px}
+  header.hero .wrap{grid-template-columns:1fr;gap:34px}
+  .cols{grid-template-columns:1fr}
+  .stage{height:auto;background:none;border:0;overflow:visible}
+  .stage .doc,.stage-edge,.stage-hint{display:none}
+  .panel{position:static;transform:none;width:100%;max-width:380px;transition:none}
+  .panel .tab{display:none}
+  .slab{border-radius:12px}
+  #page-edge,#page-hint,#page-panel,#esc-hint{display:none}
+  .try .desktop-only{display:none}
+  .buy-row{gap:1.6rem}
+  .plan{width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .panel,#page-panel,.stage-hint,#page-hint,#esc-hint{transition:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <span class="wordmark"><span class="dot"></span>EdgeNotes</span>
+    <a class="navlink" href="#features">Features</a>
+    <a class="navlink" href="#keys">Shortcuts</a>
+    <a class="pill" href="https://polar.sh/edgenotes">Get it — $10</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">macOS · menu bar · one-time $10</p>
+      <h1>Notes that live at the <span class="edge">edge</span> of your screen.</h1>
+      <p class="lede">Push your cursor into the screen edge — or hit a hotkey — and the panel slides in <strong>over whatever you're doing</strong>: fullscreen video, a deck, another Space. Write the thing, press <strong>Esc</strong>, it's gone.</p>
+
+      <div class="try">
+        <p class="try-label desktop-only" id="try-label">Try it — rest your cursor on the right edge of the window beside this text, or:</p>
+        <div class="try-row">
+          <button id="toggle-btn" type="button">Slide the panel in</button>
+          <span class="or">or press Control + Option + N</span>
+          <span><kbd>⌃</kbd> <kbd>⌥</kbd> <kbd>N</kbd></span>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a class="btn btn-buy" href="https://polar.sh/edgenotes">Buy EdgeNotes — $10</a>
+      </div>
+      <p class="price-note">One-time. No subscription, no account, no telemetry.</p>
+    </div>
+
+    <!-- The stage: a document window with the real panel motion over it. -->
+    <div class="stage" id="stage">
+      <div class="doc" id="doc">
+        <p>Draft — quarterly review. The team presents shipped work and the roadmap in turn, and notes from the previous session are read back before new items are raised.</p>
+        <p>Costs held flat through spring while usage nearly doubled, attributed to the caching work landed in March. The mobile release slipped two weeks; hiring remains open for two roles.</p>
+        <p>The board asked for a written follow-up on the pricing experiment, circulated before the next session.</p>
+      </div>
+      <div class="stage-edge" id="stage-edge" aria-hidden="true"></div>
+      <div class="stage-hint" id="stage-hint" aria-hidden="true"></div>
+
+      <aside class="panel" id="stage-panel" aria-label="EdgeNotes panel demo">
+        <div class="tab" aria-hidden="true">‹</div>
+        <div class="slab">
+          <div class="slab-top">
+            <span class="chip">＋ New Note</span>
+            <span class="chip search">⌕ Search</span>
+            <span class="chip gear">⚙</span>
+          </div>
+          <div class="slab-rule"></div>
+          <div class="slab-notes">
+            <div class="snote">
+              <div class="sgutter pin" title="Pinned">⚲</div>
+              <div class="sbody">
+                <h4>Ship checklist</h4>
+                <div class="task done"><span class="box"></span><span>notarize build</span></div>
+                <div class="task"><span class="box"></span><span>update the site</span></div>
+              </div>
+            </div>
+            <div class="snote">
+              <div class="sgutter">2h</div>
+              <div class="sbody">
+                <h4>Standup notes</h4>
+                <p>- ask about the API freeze</p>
+                <p>- demo slot on Friday?</p>
+              </div>
+            </div>
+            <div class="snote">
+              <div class="sgutter">5h</div>
+              <div class="sbody">
+                <h4>Call plumber</h4>
+                <p>0161 555 0182 — before Thu</p>
+              </div>
+            </div>
+          </div>
+          <div class="slab-rule"></div>
+          <div class="slab-foot"><span>8 notes</span><span>2 hidden ▾</span></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</header>
+
+<!-- The same panel at page scale, for the hotkey and the viewport's own edge.
+     Markup is cloned from the stage panel on load so there is one source. -->
+<div id="page-edge" aria-hidden="true"></div>
+<div id="page-hint" aria-hidden="true"></div>
+<div id="esc-hint" role="status">Press <kbd>Esc</kbd> to send it away</div>
+
+<main>
+<section id="features">
+  <div class="wrap">
+    <h2>Built around one motion</h2>
+    <div class="cols">
+      <div class="col">
+        <h3>Above fullscreen, across Spaces</h3>
+        <p>The panel joins every Space and floats above other apps' fullscreen windows, so summoning it never yanks you somewhere else. Sandboxed notes apps can't do this — it's why EdgeNotes isn't in the App Store.</p>
+      </div>
+      <div class="col">
+        <h3>Plain markdown, on disk</h3>
+        <p>Notes are ordinary <code>.md</code> files, saved as you type. No database, no export step. Point the folder at iCloud or a git repo and you have sync.</p>
+      </div>
+      <div class="col">
+        <h3>Quiet by design</h3>
+        <p>No Dock icon, no window, no permission prompts on first launch — the hotkey and hot edge avoid Accessibility gates entirely. Every action is reachable from the keyboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="honest">
+  <div class="wrap">
+    <h2>The honest bits</h2>
+    <div class="prose">
+      <p><strong>Your notes stay yours.</strong> Every note is a markdown file in a folder you choose. Delete EdgeNotes tomorrow and the notes are still sitting there, readable in any editor. Nothing is uploaded, nothing phones home.</p>
+      <p><strong>Not in the App Store, on purpose.</strong> Floating above fullscreen apps and joining every Space isn't possible inside the sandbox. The app is Developer&nbsp;ID signed and notarized instead, so it opens clean on any Mac.</p>
+      <p><strong>What it doesn't do.</strong> No iOS app, no sync service, no AI, no folders-and-tags system to maintain. It's a scratchpad that shows up fast and gets out of the way — that's the whole product.</p>
+    </div>
+  </div>
+</section>
+
+<section id="buy">
+  <div class="wrap">
+    <h2>Get EdgeNotes</h2>
+    <div class="buy-row">
+      <div class="plan">
+        <h3>EdgeNotes</h3>
+        <p class="amount">$10 <small>once</small></p>
+        <ul>
+          <li>Signed and notarized, opens clean</li>
+          <li>Automatic updates, forever</li>
+          <li>Support at support@edgenotes.app</li>
+          <li>macOS 13+, Apple Silicon &amp; Intel</li>
+        </ul>
+        <a class="btn btn-buy" href="https://polar.sh/edgenotes">Buy EdgeNotes</a>
+      </div>
+      <p class="refund">Not for you? Reply to your receipt within 14 days for a refund, no questions asked.</p>
+    </div>
+  </div>
+</section>
+
+<section id="keys">
+  <div class="wrap">
+    <h2>Lives on the keyboard</h2>
+    <table class="keys">
+      <tr><td>Toggle the panel <span class="mods">(Control + Option + N)</span></td><td>⌃ ⌥ N</td></tr>
+      <tr><td>Summon it pinned <span class="mods">(Control + Option + Shift + N)</span></td><td>⌃ ⌥ ⇧ N</td></tr>
+      <tr><td>New note</td><td>⌘ N</td></tr>
+      <tr><td>Commands and jump-to-note</td><td>⌘ K</td></tr>
+      <tr><td>Search every note at once</td><td>⌘ F · ⌘ G</td></tr>
+      <tr><td>Markdown preview · timestamp</td><td>⌘ P · ⌘ T</td></tr>
+      <tr><td>Dismiss</td><td>Esc</td></tr>
+    </table>
+    <p class="prose" style="margin-top:1.4rem">Hotkey, edge, size, opacity and fonts are configurable — live in Settings, or by hand in a plain <code>config.json</code>. Scriptable from Raycast, Alfred or the shell.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>EdgeNotes · made for macOS</span>
+    <span><a href="mailto:support@edgenotes.app">support@edgenotes.app</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var mobile = window.matchMedia('(max-width:900px)'),
+      DWELL  = 300;   /* hotEdgeDwell default, in ms */
+
+  /* ---- the hero stage ---- */
+  var stagePanel = document.getElementById('stage-panel'),
+      stageEdge  = document.getElementById('stage-edge'),
+      stageHint  = document.getElementById('stage-hint'),
+      doc        = document.getElementById('doc'),
+      btn        = document.getElementById('toggle-btn'),
+      tryLabel   = document.getElementById('try-label'),
+      stageTimer = null;
+
+  /* The instruction is only true in one direction, so it swaps with the
+     panel: how to summon it while it's away, how to dismiss it once it's in. */
+  var LABEL_SHUT = 'Try it — rest your cursor on the right edge of the window beside this text, or:',
+      LABEL_OPEN = 'That’s the whole interaction. Press <kbd>Esc</kbd> and it’s gone — exactly as the app behaves.';
+
+  function stageOpen(on){
+    if (mobile.matches) return;
+    stagePanel.classList.toggle('open', on);
+    btn.textContent = on ? 'Slide it away' : 'Slide the panel in';
+    tryLabel.innerHTML = on ? LABEL_OPEN : LABEL_SHUT;
+  }
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (mobile.matches){ stagePanel.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+    stageOpen(!stagePanel.classList.contains('open'));
+  });
+
+  stageEdge.addEventListener('mouseenter', function(){
+    stageHint.classList.add('dwelling');
+    stageTimer = setTimeout(function(){ stageOpen(true); }, DWELL);
+  });
+  stageEdge.addEventListener('mouseleave', function(){
+    stageHint.classList.remove('dwelling');
+    clearTimeout(stageTimer);
+  });
+
+  /* Clicking the document dismisses it, exactly as an unpinned panel does. */
+  doc.addEventListener('click', function(){ stageOpen(false); });
+
+  /* ---- the same panel at page scale, for the hotkey and viewport edge ---- */
+  var pagePanel = stagePanel.cloneNode(true),
+      pageEdge  = document.getElementById('page-edge'),
+      pageHint  = document.getElementById('page-hint'),
+      pageTimer = null;
+
+  pagePanel.id = 'page-panel';
+  pagePanel.classList.remove('open');
+  pagePanel.setAttribute('aria-hidden','true');
+  document.body.appendChild(pagePanel);
+
+  var escHint = document.getElementById('esc-hint');
+
+  function pageOpen(on){
+    if (mobile.matches) return;
+    pagePanel.classList.toggle('open', on);
+    pagePanel.setAttribute('aria-hidden', on ? 'false' : 'true');
+    /* This panel can be summoned from anywhere on the page, so the way out
+       has to travel with it rather than live up in the hero copy. */
+    escHint.classList.toggle('on', on);
+  }
+
+  pageEdge.addEventListener('mouseenter', function(){
+    pageHint.classList.add('dwelling');
+    pageTimer = setTimeout(function(){ pageOpen(true); }, DWELL);
+  });
+  pageEdge.addEventListener('mouseleave', function(){
+    pageHint.classList.remove('dwelling');
+    clearTimeout(pageTimer);
+  });
+
+  /* Esc closes both; ⌃⌥N toggles the page-scale one, as the copy promises. */
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ stageOpen(false); pageOpen(false); }
+    if (e.ctrlKey && e.altKey && e.code === 'KeyN'){
+      e.preventDefault();
+      pageOpen(!pagePanel.classList.contains('open'));
+    }
+  });
+
+  /* A click anywhere outside dismisses the page-scale panel. */
+  document.addEventListener('click', function(e){
+    if (pagePanel.classList.contains('open') && !pagePanel.contains(e.target)) pageOpen(false);
+  });
+  pagePanel.addEventListener('click', function(e){ e.stopPropagation(); });
+})();
+</script>
+</body>
+</html>
