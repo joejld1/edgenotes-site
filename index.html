@@ -177,10 +177,6 @@ kbd{
 }
 .sgutter.pin{color:var(--amber)}
 .sbody{border-left:1px solid rgba(255,255,255,.08);padding:0 14px 0 12px;min-width:0}
-.sbody h4{
-  font-family:var(--font-display);font-size:12px;font-weight:600;
-  color:rgba(255,255,255,.92);margin-bottom:3px;
-}
 .sbody p{font-size:10.5px;line-height:1.5;color:rgba(255,255,255,.85);white-space:nowrap}
 .task{display:flex;align-items:center;gap:6px;font-size:10.5px;line-height:1.6;color:rgba(255,255,255,.85)}
 .box{
@@ -188,6 +184,11 @@ kbd{
   border:1px solid rgba(255,255,255,.3);
 }
 .task.done .box{background:var(--amber);border-color:var(--amber)}
+.sbody strong{color:rgba(255,255,255,.96);font-weight:600}
+.sbody code{
+  font-size:9.5px;color:#c9c0ff;
+  background:rgba(255,255,255,.09);border-radius:3px;padding:.06em .3em;
+}
 .task.done span{color:rgba(255,255,255,.4);text-decoration:line-through}
 .slab-foot{
   display:flex;justify-content:space-between;padding:8px 14px 10px;
@@ -346,23 +347,23 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:1.4rem;justify-content:space-betwee
             <div class="snote">
               <div class="sgutter pin" title="Pinned">⚲</div>
               <div class="sbody">
-                <h4>Ship checklist</h4>
+                <p>Ship checklist</p>
                 <div class="task done"><span class="box"></span><span>notarize build</span></div>
-                <div class="task"><span class="box"></span><span>update the site</span></div>
+                <div class="task"><span class="box"></span><span>tag <code>v1.4.2</code></span></div>
               </div>
             </div>
             <div class="snote">
               <div class="sgutter">2h</div>
               <div class="sbody">
-                <h4>Standup notes</h4>
-                <p>- ask about the API freeze</p>
+                <p>Standup notes</p>
+                <p>- ask about the <strong>API freeze</strong></p>
                 <p>- demo slot on Friday?</p>
               </div>
             </div>
             <div class="snote">
               <div class="sgutter">5h</div>
               <div class="sbody">
-                <h4>Call plumber</h4>
+                <p>Call plumber</p>
                 <p>0161 555 0182 — before Thu</p>
               </div>
             </div>
@@ -392,7 +393,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:1.4rem;justify-content:space-betwee
       </div>
       <div class="col">
         <h3>Plain markdown, on disk</h3>
-        <p>Notes are ordinary <code>.md</code> files, saved as you type. No database, no export step. Point the folder at iCloud or a git repo and you have sync.</p>
+        <p>Headings, emphasis and <code>code</code> style themselves as you type, and a <code>```</code> block sets the whole thing in monospace. The file stays plain text with the markers intact — ordinary <code>.md</code>, no database, no export step. Point the folder at iCloud or a git repo and you have sync.</p>
       </div>
       <div class="col">
         <h3>Quiet by design</h3>
@@ -441,11 +442,13 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:1.4rem;justify-content:space-betwee
       <tr><td>Summon it pinned <span class="mods">(Control + Option + Shift + N)</span></td><td>⌃ ⌥ ⇧ N</td></tr>
       <tr><td>New note</td><td>⌘ N</td></tr>
       <tr><td>Commands and jump-to-note</td><td>⌘ K</td></tr>
-      <tr><td>Search every note at once</td><td>⌘ F · ⌘ G</td></tr>
-      <tr><td>Markdown preview · timestamp</td><td>⌘ P · ⌘ T</td></tr>
+      <tr><td>Search every note at once</td><td>⌘ F</td></tr>
+      <tr><td>Step to the next match <span class="mods">(add Shift to go back)</span></td><td>⌘ G</td></tr>
+      <tr><td>Markdown preview</td><td>⌘ P</td></tr>
+      <tr><td>Insert the date and time</td><td>⌘ T</td></tr>
       <tr><td>Dismiss</td><td>Esc</td></tr>
     </table>
-    <p class="prose" style="margin-top:1.4rem">Hotkey, edge, size, opacity and fonts are configurable — live in Settings, or by hand in a plain <code>config.json</code>. Scriptable from Raycast, Alfred or the shell.</p>
+    <p class="prose" style="margin-top:1.4rem">Hotkey, edge, size, opacity and fonts are configurable — live in Settings, or by hand in a plain <code>config.json</code>.</p>
   </div>
 </section>
 </main>
